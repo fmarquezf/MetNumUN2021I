@@ -1,0 +1,904 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "kernelspec": {
+      "display_name": "Python 3",
+      "language": "python",
+      "name": "python3"
+    },
+    "language_info": {
+      "codemirror_mode": {
+        "name": "ipython",
+        "version": 3
+      },
+      "file_extension": ".py",
+      "mimetype": "text/x-python",
+      "name": "python",
+      "nbconvert_exporter": "python",
+      "pygments_lexer": "ipython3",
+      "version": "3.5.2"
+    },
+    "colab": {
+      "name": "HouseholderQR.json",
+      "provenance": [],
+      "collapsed_sections": [],
+      "include_colab_link": true
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/fmarquezf/MetNumUN2021I/blob/main/AlgorithmicToolboxWeek2QRdecompositionGroup4\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "collapsed": true,
+        "id": "vhx0Y_Ab1uH1"
+      },
+      "source": [
+        "import numpy as np\n",
+        "\n",
+        "from numpy.testing import assert_allclose"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "KpG5Xkc71uH4"
+      },
+      "source": [
+        "# Part I. Construct a Householder reflection of a vector."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "c5v94IJj1uH5"
+      },
+      "source": [
+        "Given a vector $\\mathbf{x}$, and a plane with a normal vector $\\mathbf{u}$, the Householder transformation reflects $\\mathbf{x}$ about the plane.\n",
+        "\n",
+        "The matrix of the Householder transformation is\n",
+        "\n",
+        "$$\n",
+        "\\mathbf{H} = \\mathbf{1} - 2 \\mathbf{u} \\mathbf{u}^T\n",
+        "$$\n",
+        "\n",
+        "Given two equal-length vectors $\\mathbf{x}$ and $\\mathbf{y}$, a rotation which brings $\\mathbf{x}$ to $\\mathbf{y}$ is a Householder transform with\n",
+        "\n",
+        "$$\n",
+        "\\mathbf{u} = \\frac{\\mathbf{x} - \\mathbf{y}}{\\left|\\mathbf{x} - \\mathbf{y}\\right|}\n",
+        "$$"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "uNlnli_s1uH6"
+      },
+      "source": [
+        "Write a function which rotates a given vector, $\\mathbf{x} = (x_1, \\dots, x_n)$ into $\\mathbf{y} = (\\left|\\mathbf{x}\\right|, 0, \\dots, 0)^T$ using a Householder transformation."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "collapsed": true,
+        "id": "usEtPPLh1uH7"
+      },
+      "source": [
+        "def householder(vec):\n",
+        "    \"\"\"Construct a Householder reflection to zero out 2nd and further components of a vector.\n",
+        "\n",
+        "    Parameters\n",
+        "    ----------\n",
+        "    vec : array-like of floats, shape (n,)\n",
+        "        Input vector\n",
+        "    \n",
+        "    Returns\n",
+        "    -------\n",
+        "    outvec : array of floats, shape (n,)\n",
+        "        Transformed vector, with ``outvec[1:]==0`` and ``|outvec| == |vec|``\n",
+        "    H : array of floats, shape (n, n)\n",
+        "        Orthogonal matrix of the Householder reflection\n",
+        "    \"\"\"\n",
+        "    vec = np.asarray(vec, dtype=float)\n",
+        "    if vec.ndim != 1:\n",
+        "        raise ValueError(\"vec.ndim = %s, expected 1\" % vec.ndim)\n",
+        "    \n",
+        "    # ... ENTER YOUR CODE HERE ...\n",
+        "    x = vec\n",
+        "    y = np.zeros((len(x)))\n",
+        "    y[0] = np.linalg.norm(x)\n",
+        "\n",
+        "    u = (x - y) / np.linalg.norm(x - y)\n",
+        "\n",
+        "    H = np.eye(len(x)) - 2*np.outer(u,u)\n",
+        "    outvec = H@x\n",
+        "    return outvec, H"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "0wu2KJl81uH7"
+      },
+      "source": [
+        "Test your function using tests below:"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "collapsed": true,
+        "id": "u_fgHINs1uH8"
+      },
+      "source": [
+        "# Test I.1 (10% of the total grade).\n",
+        "\n",
+        "v = np.array([1, 2, 3])\n",
+        "v1, h = householder(v)\n",
+        "\n",
+        "assert_allclose(np.dot(h, v1), v)\n",
+        "assert_allclose(np.dot(h, v), v1)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "collapsed": true,
+        "id": "MwvMJXDR1uH9"
+      },
+      "source": [
+        "# Test I.2 (10% of the total grade).\n",
+        "\n",
+        "rndm = np.random.RandomState(1234)\n",
+        "\n",
+        "vec = rndm.uniform(size=7)\n",
+        "v1, h = householder(vec)\n",
+        "\n",
+        "assert_allclose(np.dot(h, v1), vec)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "GinqHgQm1uH_"
+      },
+      "source": [
+        "# Part II. Compute the $\\mathrm{QR}$ decomposition of a matrix.\n",
+        "\n",
+        "Given a rectangular $m\\times n$ matrix $\\mathbf{A}$, construct a Householder reflector matrix $\\mathbf{H}_1$ which transforms the first column of $\\mathbf{A}$ (and call the result $\\mathbf{A}^{(1)}$)\n",
+        "\n",
+        "$$\n",
+        "\\mathbf{H}_1 \\mathbf{A} =%\n",
+        "\\begin{pmatrix}\n",
+        "\\times & \\times & \\times & \\dots & \\times \\\\\n",
+        "0      & \\times & \\times & \\dots & \\times \\\\\n",
+        "0      & \\times & \\times & \\dots & \\times \\\\\n",
+        "&& \\dots&& \\\\\n",
+        "0      & \\times & \\times & \\dots & \\times \\\\\n",
+        "\\end{pmatrix}%\n",
+        "\\equiv \\mathbf{A}^{(1)}\\;.\n",
+        "$$\n",
+        "\n",
+        "Now consider the lower-right submatrix of $\\mathbf{A}^{(1)}$, and construct a Householder reflector which annihilates the second column of $\\mathbf{A}$:\n",
+        "\n",
+        "$$\n",
+        "\\mathbf{H}_2 \\mathbf{A}^{(1)} =%\n",
+        "\\begin{pmatrix}\n",
+        "\\times & \\times & \\times & \\dots & \\times \\\\\n",
+        "0      & \\times & \\times & \\dots & \\times \\\\\n",
+        "0      & 0      & \\times & \\dots & \\times \\\\\n",
+        "&& \\dots&& \\\\\n",
+        "0      & 0      & \\times & \\dots & \\times \\\\\n",
+        "\\end{pmatrix}%\n",
+        "\\equiv \\mathbf{A}^{(2)} \\;.\n",
+        "$$\n",
+        "\n",
+        "Repeating the process $n-1$ times, we obtain\n",
+        "\n",
+        "$$\n",
+        "\\mathbf{H}_{n-1} \\cdots \\mathbf{H}_2 \\mathbf{H}_1 \\mathbf{A} = \\mathbf{R} \\;,\n",
+        "$$\n",
+        "\n",
+        "with $\\mathbf{R}$ an upper triangular matrix. Since each $\\mathbf{H}_k$ is orthogonal, so is their product. The inverse of an orthogonal matrix is orthogonal. Hence the process generates the $\\mathrm{QR}$ decomposition of $\\mathbf{A}$. "
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "fyx2i7aV1uIB"
+      },
+      "source": [
+        "Write a function, which receives a recangular matrix, $A$, and returns the Q and R factors of the $QR$ factorization of $A$."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "collapsed": true,
+        "id": "XQLAI4GJ1uIC"
+      },
+      "source": [
+        "def qr_decomp(a):\n",
+        "    \"\"\"Compute the QR decomposition of a matrix.\n",
+        "    \n",
+        "    Parameters\n",
+        "    ----------\n",
+        "    a : ndarray, shape(m, n)\n",
+        "        The input matrix\n",
+        "    \n",
+        "    Returns\n",
+        "    -------\n",
+        "    q : ndarray, shape(m, m)\n",
+        "        The orthogonal matrix\n",
+        "    r : ndarray, shape(m, n)\n",
+        "        The upper triangular matrix\n",
+        "        \n",
+        "    Examples\n",
+        "    --------\n",
+        "    >>> \n",
+        "    >>> q, r = qr_decomp(a)\n",
+        "    >>> np.assert_allclose(np.dot(q, r), a)\n",
+        "    \n",
+        "    \"\"\"\n",
+        "    a1 = np.array(a, copy=True, dtype=float)\n",
+        "    m, n = a1.shape\n",
+        "    q = np.eye(m)\n",
+        "    r = a1.copy()\n",
+        "\n",
+        "    # ... ENTER YOUR CODE HERE ...\n",
+        "    for i in range(n):\n",
+        "      v1, h = householder(r[i:,i])\n",
+        "      H = np.eye(m)\n",
+        "      H[i:,i:] = h\n",
+        "      r = H@r\n",
+        "      q = q@H\n",
+        "    return q, r"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "collapsed": true,
+        "id": "l5ubye471uIC"
+      },
+      "source": [
+        "# Might want to turn this on for prettier printing: zeros instead of `1e-16` etc\n",
+        "\n",
+        "np.set_printoptions(suppress=True)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "collapsed": true,
+        "id": "utjX6e051uID"
+      },
+      "source": [
+        "# Test II.1 (20% of the total grade)\n",
+        "\n",
+        "rndm = np.random.RandomState(1234)\n",
+        "a = rndm.uniform(size=(5, 3))\n",
+        "q, r = qr_decomp(a)\n",
+        "\n",
+        "# test that Q is indeed orthogonal\n",
+        "assert_allclose(np.dot(q, q.T), np.eye(5), atol=1e-10)\n",
+        "\n",
+        "# test the decomposition itself\n",
+        "assert_allclose(np.dot(q, r), a)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "rtitUsVu1uID"
+      },
+      "source": [
+        "Now compare your decompositions to the library function (which actually wraps the corresponding LAPACK functions)"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "collapsed": true,
+        "id": "4W-LF2OV1uIE"
+      },
+      "source": [
+        "from scipy.linalg import qr\n",
+        "qq, rr = qr(a)\n",
+        "\n",
+        "assert_allclose(np.dot(qq, rr), a)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "YW_DZIin1uIE"
+      },
+      "source": [
+        "Check if your `q` and `r` agree with `qq` and `rr`. Explain."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "yONXoHvSPmcA",
+        "outputId": "fcfc5015-89f7-45a8-bd2a-c76b956f18e3"
+      },
+      "source": [
+        "q"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "array([[ 0.13665049,  0.53601299, -0.09369752,  0.7697136 ,  0.30459557],\n",
+              "       [ 0.56035895,  0.0935397 , -0.53326881,  0.01839528, -0.62652547],\n",
+              "       [ 0.19725922,  0.65948912,  0.60068463, -0.32384673, -0.24589462],\n",
+              "       [ 0.62498418, -0.50418303,  0.52144688,  0.28453698,  0.04822969],\n",
+              "       [ 0.48765568,  0.12171264, -0.27224305, -0.47049398,  0.67223293]])"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 11
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "iVDzZUk-NlKH",
+        "outputId": "e287291b-d524-4ef7-cb73-678caeaf8d2b"
+      },
+      "source": [
+        "qq"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "array([[-0.13665049,  0.53601299,  0.09369752,  0.661619  , -0.49749149],\n",
+              "       [-0.56035895,  0.0935397 ,  0.53326881, -0.52477245, -0.34276292],\n",
+              "       [-0.19725922,  0.65948912, -0.60068463, -0.37879015,  0.14784752],\n",
+              "       [-0.62498418, -0.50418303, -0.52144688,  0.18967657, -0.21750907],\n",
+              "       [-0.48765568,  0.12171264,  0.27224305,  0.32774225,  0.75222783]])"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 12
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "eKPDfcUENmRv",
+        "outputId": "d20d6943-9296-4b27-f17c-b3de63c12d07"
+      },
+      "source": [
+        "r"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "array([[ 1.40152769,  1.2514379 ,  0.89523615],\n",
+              "       [ 0.        ,  0.84158252,  0.68447942],\n",
+              "       [-0.        , -0.        ,  0.5496046 ],\n",
+              "       [ 0.        ,  0.        ,  0.        ],\n",
+              "       [ 0.        , -0.        , -0.        ]])"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 13
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "vKIKY0E9Nm3f",
+        "outputId": "3a0fde6b-a692-48e3-bae2-3368ceb7a6f9"
+      },
+      "source": [
+        "rr"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "array([[-1.40152769, -1.2514379 , -0.89523615],\n",
+              "       [ 0.        ,  0.84158252,  0.68447942],\n",
+              "       [ 0.        ,  0.        , -0.5496046 ],\n",
+              "       [ 0.        ,  0.        ,  0.        ],\n",
+              "       [ 0.        ,  0.        ,  0.        ]])"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 14
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "7NY9SH9G1uIF"
+      },
+      "source": [
+        "*Enter your explanation here* (10% of the total grade, peer-graded)\n",
+        "The matrices are pretty similar, except for the fact that the signs are not always correct because of the matrix rotation, and the last 2 columns of Q are different to the ones from qq, thats because the size of R makes it last 2 rows to be 0, and that doesn't let calculate the last 2 columns of Q correctly."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "CbtihMRX1uIF"
+      },
+      "source": [
+        "# Part III. Avoid forming Householder matrices explicitly."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "dWVMuBbn1uIF"
+      },
+      "source": [
+        "Note the special structure of the Householder matrices: A reflector $\\mathbf{H}$ is completely specified by a reflection vector $\\mathbf{u}$. Also note that the computational cost of applying a reflector to a matrix strongly depends on the order of operations:\n",
+        "\n",
+        "$$\n",
+        "\\left( \\mathbf{u} \\mathbf{u}^T \\right) \\mathbf{A}  \\qquad \\textrm{is } O(m^2 n)\\;,\n",
+        "$$\n",
+        "while\n",
+        "$$\n",
+        "\\mathbf{u} \\left( \\mathbf{u}^T \\mathbf{A} \\right) \\qquad \\textrm{is } O(mn)\n",
+        "$$\n",
+        "\n",
+        "Thus, it seems to make sense to *avoid* forming the $\\mathbf{H}$ matrices. Instead, one stores the reflection vectors, $\\mathbf{u}$, themselves, and provides a way of multiplying an arbitrary matrix by $\\mathbf{Q}^T$, e.g., as a standalone function (or a class)."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "oa1Nf1aq1uIF"
+      },
+      "source": [
+        "Write a function which constructs the `QR` decomposition of a matrix *without ever forming the* $\\mathbf{H}$ matrices, and returns the $\\mathbf{R}$ matrix and reflection vectors. \n",
+        "\n",
+        "Write a second function, which uses reflection vectors to multiply a matrix with $\\mathbf{Q}^T$. Make sure to include enough comments for a marker to follow your implementation, and add tests. \n",
+        "\n",
+        "(Peer-graded, 40% of the total grade)"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "MPnydBUkWX6X"
+      },
+      "source": [
+        "**1) QR for Gram Schmidt Method**"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "collapsed": true,
+        "id": "bqgLr_kQ1uIG"
+      },
+      "source": [
+        "def gram_schmidt(A):\n",
+        "    \"\"\"Gram-schmidt orthogonalization\"\"\"\n",
+        "    Q=np.zeros_like(A)\n",
+        "    cnt = 0\n",
+        "    for a in A.T:\n",
+        "        u = np.copy(a)\n",
+        "        for i in range(0, cnt):\n",
+        "            u -= np.dot(np.dot(Q[:, i].T, a), Q[:, i]) # Subtract the projection of the vector to be sought on the vector\n",
+        "        e = u / np.linalg.norm(u)  # Normalized\n",
+        "        Q[:, cnt] = e\n",
+        "        cnt += 1\n",
+        "    R = np.dot(Q.T, A)\n",
+        "    return (Q, R)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "hIUbCrGlcSmf"
+      },
+      "source": [
+        "#test Q@R = qq@rr\n",
+        "rndm = np.random.RandomState(1234)\n",
+        "a = rndm.uniform(size=(5, 3))\n",
+        "Q_gs, R_gs = gram_schmidt(a)\n",
+        "qq_gs, rr_gs = qr(a)\n",
+        "\n",
+        "assert_allclose(np.dot(Q, R), np.dot(qq, rr))"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "J1xTzGBQc1a8"
+      },
+      "source": [
+        "Checking if q and r agree with qq and rr"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "1aiJOrhtv3gl",
+        "outputId": "92d357b8-f3bf-4718-b710-f520e8444544"
+      },
+      "source": [
+        "Q_gs"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "array([[ 0.13665049,  0.53601299, -0.09369752],\n",
+              "       [ 0.56035895,  0.0935397 , -0.53326881],\n",
+              "       [ 0.19725922,  0.65948912,  0.60068463],\n",
+              "       [ 0.62498418, -0.50418303,  0.52144688],\n",
+              "       [ 0.48765568,  0.12171264, -0.27224305]])"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 71
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "JE3WnrL2v4mr",
+        "outputId": "a4c4151f-f00e-455c-9bee-8bba7a44fc19"
+      },
+      "source": [
+        "qq_gs"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "array([[-0.13665049,  0.53601299,  0.09369752,  0.661619  , -0.49749149],\n",
+              "       [-0.56035895,  0.0935397 ,  0.53326881, -0.52477245, -0.34276292],\n",
+              "       [-0.19725922,  0.65948912, -0.60068463, -0.37879015,  0.14784752],\n",
+              "       [-0.62498418, -0.50418303, -0.52144688,  0.18967657, -0.21750907],\n",
+              "       [-0.48765568,  0.12171264,  0.27224305,  0.32774225,  0.75222783]])"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 72
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "xFq_Q3Niv5eL",
+        "outputId": "a25c7b9b-04f1-4352-8851-8efeeb2ff739"
+      },
+      "source": [
+        "R_gs"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "array([[ 1.40152769,  1.2514379 ,  0.89523615],\n",
+              "       [-0.        ,  0.84158252,  0.68447942],\n",
+              "       [ 0.        ,  0.        ,  0.5496046 ]])"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 73
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "0oi8XO3Kv7QK",
+        "outputId": "24e1220b-6c85-42d2-acf4-ede399cd9481"
+      },
+      "source": [
+        "rr_gs"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "array([[-1.40152769, -1.2514379 , -0.89523615],\n",
+              "       [ 0.        ,  0.84158252,  0.68447942],\n",
+              "       [ 0.        ,  0.        , -0.5496046 ],\n",
+              "       [ 0.        ,  0.        ,  0.        ],\n",
+              "       [ 0.        ,  0.        ,  0.        ]])"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 74
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "0ipo06NfWiUH"
+      },
+      "source": [
+        "**2) QR for Givens Rotation Method**"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "vQYeWkewVqyY"
+      },
+      "source": [
+        "def givens_rotation(A):\n",
+        "    \"\"\"Givens Transformation\"\"\"\n",
+        "    (r, c) = np.shape(A)\n",
+        "    Q = np.identity(r)\n",
+        "    R = np.copy(A)\n",
+        "    (rows, cols) = np.tril_indices(r, -1, c)\n",
+        "    for (row, col) in zip(rows, cols):\n",
+        "        if R[row, col] != 0:  # R[row, col]=0 then c=1, s=0, R and Q remain unchanged\n",
+        "            r_ = np.hypot(R[col, col], R[row, col])  # d\n",
+        "            c = R[col, col]/r_\n",
+        "            s = -R[row, col]/r_\n",
+        "            G = np.identity(r)\n",
+        "            G[[col, row], [col, row]] = c\n",
+        "            G[row, col] = s\n",
+        "            G[col, row] = -s\n",
+        "            R = np.dot(G, R)  # R=G(n-1,n)*...*G(2n)*...*G(23,1n)*...*G(12)*A\n",
+        "            Q = np.dot(Q, G.T)  # Q=G(n-1,n).T*...*G(2n).T*...*G(23,1n).T*...*G(12).T\n",
+        "    return (Q, R)"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "EREWydo5Vum3"
+      },
+      "source": [
+        "#test Q@R = qq@rr\n",
+        "rndm = np.random.RandomState(1234)\n",
+        "a = rndm.uniform(size=(5, 3))\n",
+        "Q_gr, R_gr = givens_rotation(a)\n",
+        "qq_gr, rr_gr = qr(a)\n",
+        "\n",
+        "assert_allclose(np.dot(Q, R), np.dot(qq, rr))"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "qwmDE-rfJiLs"
+      },
+      "source": [
+        "Checking if q and r agree with qq and rr"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "byYm67wqVvff",
+        "outputId": "237ce6f5-43b0-4cab-a0e8-fddb6206e066"
+      },
+      "source": [
+        "Q_gr"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "array([[ 0.13665049,  0.53601299, -0.09369752, -0.80526127, -0.19181182],\n",
+              "       [ 0.56035895,  0.0935397 , -0.53326881,  0.34418264, -0.5238424 ],\n",
+              "       [ 0.19725922,  0.65948912,  0.60068463,  0.4063158 , -0.01575883],\n",
+              "       [ 0.62498418, -0.50418303,  0.52144688, -0.26076822, -0.12364196],\n",
+              "       [ 0.48765568,  0.12171264, -0.27224305,  0.        ,  0.82052525]])"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 83
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "kf8A795TVxlb",
+        "outputId": "d8c4f948-8db4-4163-e542-5a1879eb272d"
+      },
+      "source": [
+        "qq_gr"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "array([[-0.13665049,  0.53601299,  0.09369752,  0.661619  , -0.49749149],\n",
+              "       [-0.56035895,  0.0935397 ,  0.53326881, -0.52477245, -0.34276292],\n",
+              "       [-0.19725922,  0.65948912, -0.60068463, -0.37879015,  0.14784752],\n",
+              "       [-0.62498418, -0.50418303, -0.52144688,  0.18967657, -0.21750907],\n",
+              "       [-0.48765568,  0.12171264,  0.27224305,  0.32774225,  0.75222783]])"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 78
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "ZRPCkcHDVy0c",
+        "outputId": "63d762a5-ee54-4055-a18c-a02637e03105"
+      },
+      "source": [
+        "R_gr"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "array([[ 1.40152769,  1.2514379 ,  0.89523615],\n",
+              "       [-0.        ,  0.84158252,  0.68447942],\n",
+              "       [ 0.        , -0.        ,  0.5496046 ],\n",
+              "       [-0.        ,  0.        , -0.        ],\n",
+              "       [ 0.        , -0.        , -0.        ]])"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 79
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "-CGeP1L_V0oC",
+        "outputId": "fc433efa-a117-4da4-f9ca-cfb60a4a96bf"
+      },
+      "source": [
+        "rr_gr"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "array([[-1.40152769, -1.2514379 , -0.89523615],\n",
+              "       [ 0.        ,  0.84158252,  0.68447942],\n",
+              "       [ 0.        ,  0.        , -0.5496046 ],\n",
+              "       [ 0.        ,  0.        ,  0.        ],\n",
+              "       [ 0.        ,  0.        ,  0.        ]])"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 80
+        }
+      ]
+    }
+  ]
+}
